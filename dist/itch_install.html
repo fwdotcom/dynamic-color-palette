@@ -1,0 +1,67 @@
+<!-- itch.io — "Description" field on each download (HTML mode) -->
+<!-- Paste this text for both downloads; the relevant section applies to each. -->
+
+<h2>What's in the Download</h2>
+
+<p>There are two separate downloads:</p>
+
+<ul>
+  <li>
+    <strong>dynamic_color_palette.zip</strong> — Blender addon (GPL v3)<br>
+    Requires Blender 4.2 or later.
+  </li>
+  <li>
+    <strong>dynamic_color_palette_godot_shader.zip</strong> — Godot 4 spatial shader (MIT)<br>
+    Requires Godot 4.x. Free to use in commercial and open-source projects.
+  </li>
+</ul>
+
+<p>You only need the Godot shader if you are using the Multicolor workflow in Godot 4.</p>
+
+<hr>
+
+<h2>Installation — Blender Addon</h2>
+
+<ol>
+  <li>Download <strong>dynamic_color_palette.zip</strong>.</li>
+  <li>Open Blender 4.2 or later.</li>
+  <li>Drag and drop the ZIP file into the Blender window — the Extension Manager installs it automatically.</li>
+  <li>The <strong>DCP</strong> tab appears in the <strong>3D Viewport N-Panel</strong> (press <kbd>N</kbd> to open it), visible in both Object Mode and Edit Mode.</li>
+</ol>
+
+<h2>Installation — Godot 4 Shader</h2>
+
+<ol>
+  <li>Download <strong>dynamic_color_palette_godot_shader.zip</strong> and extract it.</li>
+  <li>Copy <code>dynamic_color_palette.gdshader</code> into your Godot project (e.g. <code>res://shaders/</code>).</li>
+  <li>Select your mesh node in the Godot scene.</li>
+  <li>In the Inspector, assign a new <strong>ShaderMaterial</strong> to the mesh's material slot.</li>
+  <li>Set the ShaderMaterial's <strong>Shader</strong> property to <code>dynamic_color_palette.gdshader</code>.</li>
+  <li>
+    Assign the two textures exported from Blender to the shader parameters:
+    <ul>
+      <li><code>albedo_tex</code> → <code>dcp_albedo.png</code> — import as <strong>sRGB</strong>, filter: <strong>Nearest</strong>, repeat: <strong>Disabled</strong></li>
+      <li><code>material_tex</code> → <code>dcp_material.png</code> — import as <strong>Linear (non-color)</strong>, filter: <strong>Nearest</strong>, repeat: <strong>Disabled</strong></li>
+    </ul>
+  </li>
+</ol>
+
+<p>
+  <strong>Important:</strong> <code>material_tex</code> must be imported as non-color / linear. If Godot applies
+  sRGB to it, PBR values will be wrong. Use <strong>Nearest</strong> filtering on both textures — bilinear
+  filtering blurs adjacent palette cells into each other, producing incorrect colors at cell edges.
+</p>
+
+<hr>
+
+<h2>Quick Start (Blender)</h2>
+
+<ol>
+  <li>Open the <strong>DCP</strong> tab in the N-Panel.</li>
+  <li>Click <strong>Configure…</strong> — adjust columns, rows, and PBR values, or leave the defaults.</li>
+  <li>Click <strong>Generate / Regenerate Palette</strong> inside the dialog.</li>
+  <li>Open an Image Editor next to the 3D Viewport. Click <strong>Pick From Image Editor</strong> in the DCP panel.</li>
+  <li>Click a color cell to preview it, or select faces first and click to assign immediately.</li>
+  <li>Use <strong>Assign Multicolor Material</strong> (UV-driven) or <strong>Assign Singlecolor Material</strong> (baked) as needed.</li>
+  <li>Set an Export Path in Configure… — DCP writes <code>dcp_albedo.png</code> and <code>dcp_material.png</code> on every Generate run.</li>
+</ol>

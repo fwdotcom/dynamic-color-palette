@@ -1,0 +1,64 @@
+// SPDX-License-Identifier: MIT
+//
+// Dynamic Color Palette
+// Version 2.0.6
+// (C) 2026 Frank Winter
+// https://fwdotcom.itch.io/dynamic-color-palette
+//
+// This shader is licensed under the MIT License for compatibility with Godot projects.
+// See LICENSE file for full license text.
+//
+// Godot 4 spatial shader for the Dynamic Color Palette workflow.
+//
+// Assign this as a ShaderMaterial and connect both textures:
+//   albedo_tex   – {PREFIX}albedo.png   (sRGB color palette)
+//   material_tex – {PREFIX}material.png (PBR data, non-color)
+//
+// The mesh UVs must point into the correct palette quadrant.
+// Channel mapping of material_tex:
+//   R = Roughness
+//   G = Metallic
+//   B = Emission Strength (multiplied with albedo color)
+
+shader_type spatial;
+
+// ── Texture uniforms ──────────────────────────────────────────────────────────
+// albedo_tex: visual HSV color palette (sRGB).
+// Use Filter: Nearest in the import settings to prevent bilinear blending
+// between palette cells.
+uniform sampler2D albedo_tex   : source_color,   filter_nearest, repeat_disable;
+
+// material_tex: PBR data texture (R=Roughness, G=Metallic, B=Emission Strength).
+// Must NOT use source_color – values are raw linear data, not a color.
+// Set Import > Compress > Mode to "Lossless" to preserve exact channel values.
+uniform sampler2D material_tex : hint_default_black, filter_nearest, repeat_disable;
+
+// ── Optional global emission scale ───────────────────────────────────────────
+// Multiplier applied on top of the B channel value from material_tex.
+// Useful for animating or globally scaling emission at runtime without
+// modifying the texture. Set to 1.0 to use the raw texture value directly.
+uniform float emission_scale : hint_range(0.0, 16.0, 0.01) = 1.0;
+
+
+void fragment() {
+    // Sample both textures at the same UV coordinate.
+    // The UV is expected to point into one of the three palette quadrants:
+    //   top-left     (SO) – Solid
+    //   top-right    (ME) – Metal
+    //   bottom-left  (EM) – Emission
+    vec4 albedo_sample   = texture(albedo_tex,   UV);
+    vec4 material_sample = texture(material_tex, UV);
+
+    // ── Base color ────────────────────────────────────────────────────────────
+    ALBEDO = albedo_sample.rgb;
+
+    // ── PBR channels from material texture ───────────────────────────────────
+    ROUGHNESS = material_sample.r;   // R channel
+    METALLIC  = material_sample.g;   // G channel
+
+    // ── Emission ──────────────────────────────────────────────────────────────
+    // Emission color is the albedo color tinted by the emission strength (B channel).
+    // Multiply by emission_scale for runtime control.
+    float emission_strength = material_sample.b * emission_scale;
+    EMISSION = albedo_sample.rgb * emission_strength;
+}
