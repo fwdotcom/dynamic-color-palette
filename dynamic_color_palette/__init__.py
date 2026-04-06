@@ -43,7 +43,7 @@ import bpy
 bl_info = {
     "name":        "Dynamic Color Palette",
     "author":      "Frank Winter",
-    "version":     (2, 0, 7),
+    "version":     (2, 0, 8),
     "blender":     (4, 2, 0),
     "location":    "View3D → N-Panel → DCP",
     "description": "Generate palette textures and assign colors via UV lookup",
@@ -111,6 +111,16 @@ DEFAULT_BG_HEX             = "1A1A1A"
 DEFAULT_FG_HEX             = "CCCCCC"
 
 
+@bpy.app.handlers.persistent
+def _on_load_post(filepath, *args):
+    """Reset pick_from_image_editor to False on every blend file load."""
+    for scene in bpy.data.scenes:
+        try:
+            scene.dcp_props.pick_from_image_editor = False
+        except Exception:
+            pass
+
+
 def register() -> None:
     """Register all DCP classes and attach ``dcp_props`` to ``bpy.types.Scene``.
 
@@ -176,7 +186,8 @@ def register() -> None:
         del bpy.types.Scene.dcp_props
     bpy.types.Scene.dcp_props = PointerProperty(type=DCPProperties)
 
-
+    if _on_load_post not in bpy.app.handlers.load_post:
+        bpy.app.handlers.load_post.append(_on_load_post)
 
     print("[DCP v2.0] Registered – open sidebar (N) → DCP tab.")
 
@@ -210,6 +221,9 @@ def unregister() -> None:
     from .core.textures       import _get_picker_previews, _set_picker_previews
 
     _unregister_wm_props()
+
+    if _on_load_post in bpy.app.handlers.load_post:
+        bpy.app.handlers.load_post.remove(_on_load_post)
 
     _CLASSES = (
         DCPEmissionEntry,

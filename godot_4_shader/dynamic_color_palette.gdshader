@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 //
 // Dynamic Color Palette
-// Version 2.0.6
+// Version 2.0.8
 // (C) 2026 Frank Winter
 // https://fwdotcom.itch.io/dynamic-color-palette
 //

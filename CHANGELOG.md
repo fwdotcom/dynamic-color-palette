@@ -5,6 +5,18 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+- Pick From Image Editor is now reset to OFF when a blend file is opened —
+  previously a saved ON state would show the button as active without a running
+  modal operator
+
+### Added
+- Export now writes a `dcp_config.json` alongside the palette textures when an
+  export path is set; contains `albedo_image_name`, `material_image_name`,
+  `emission_strips`, `emission_factor`, `color_columns`, `color_rows`,
+  `cell_size`, `info_line1`, `info_line2`, and `info_line3`; emission strip
+  values are rounded to 2 decimal places
+
 ## [2.0.7] – 2026-03-31
 
 ### Fixed

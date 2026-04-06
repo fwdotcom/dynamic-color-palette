@@ -30,12 +30,14 @@ Core generation logic (``_run_generate``)
 """
 from __future__ import annotations
 
+import json
 import os
 
 import bpy
 from bpy.types import Operator
 
 from .. import (
+    PREFIX,
     ALBEDO_IMAGE_NAME, MATERIAL_IMAGE_NAME,
     DEFAULT_COLOR_COLUMNS, DEFAULT_COLOR_ROWS,
     DEFAULT_PASTEL_SATURATION, DEFAULT_SHADOW_VALUE,
@@ -233,6 +235,23 @@ def _run_generate(operator, context, props) -> None:
 
     _recompute_preview(props)
     _write_snapshot(props)
+
+    if save_path:
+        config_data = {
+            "albedo_image_name":  ALBEDO_IMAGE_NAME,
+            "material_image_name": MATERIAL_IMAGE_NAME,
+            "emission_strips":    [round(e.value, 2) for e in props.emission_strengths],
+            "emission_factor":    props.emission_factor,
+            "color_columns":      props.color_columns,
+            "color_rows":         props.color_rows,
+            "cell_size":          cs,
+            "info_line1":         props.info_line_1,
+            "info_line2":         props.info_line_2,
+            "info_line3":         props.info_line_3,
+        }
+        config_path = os.path.join(save_path, PREFIX + "config.json")
+        with open(config_path, "w", encoding="utf-8") as fh:
+            json.dump(config_data, fh, indent=2)
 
     operator.report({"INFO"}, "Palette generated.")
     show_picker_in_image_editor(context)
