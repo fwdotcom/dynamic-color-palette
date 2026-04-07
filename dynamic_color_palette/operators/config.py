@@ -206,15 +206,15 @@ class DCP_OT_OpenConfig(Operator):
         box, open_ = _section(layout, wm, "dcp_cfg_export_open",
                                "Export", "EXPORT")
         if open_:
-            col = box.column(align=True)
-            col.prop(props, "textures_export_dir",
-                     text=f"Export {PREFIX}albedo.png / {PREFIX}material.png")
-            col.prop(props, "json_export_dir",
-                     text=f"Export {PREFIX}config.json")
-            col.prop(props, "gdshader_export_dir",
-                     text="Export dcp_multicol.gdshader")
-            col.prop(props, "gdutilclass_export_dir",
-                     text="Export dcp_util.gd")
+            col = box.column(align=False)
+            for label, attr in (
+                (f"{PREFIX}albedo.png / {PREFIX}material.png", "textures_export_dir"),
+                (f"{PREFIX}config.json",                       "json_export_dir"),
+                ("dcp_multicol.gdshader",                      "gdshader_export_dir"),
+                ("dcp_util.gd",                                "gdutilclass_export_dir"),
+            ):
+                col.label(text=label)
+                col.prop(props, attr, text="")
 
         # ---- Info Quadrant ---------------------------------------------
         box, open_ = _section(layout, wm, "dcp_cfg_info_open",

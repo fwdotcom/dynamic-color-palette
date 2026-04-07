@@ -261,10 +261,9 @@ def _run_generate(operator, context, props) -> None:
 
     if shader_dir:
         with open(os.path.join(_tmpl_dir, "dcp_multicol.gdshader"), encoding="utf-8") as fh:
-            shader_text = fh.read().format(
-                PREFIX=PREFIX,
-                emission_factor=f"{props.emission_factor:.6g}",
-            )
+            shader_text = fh.read() \
+                .replace("{PREFIX}", PREFIX) \
+                .replace("{emission_factor}", f"{props.emission_factor:.6g}")
         with open(os.path.join(shader_dir, "dcp_multicol.gdshader"), "w", encoding="utf-8") as fh:
             fh.write(shader_text)
 
