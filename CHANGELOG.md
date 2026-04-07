@@ -16,6 +16,11 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   `emission_strips`, `emission_factor`, `color_columns`, `color_rows`,
   `cell_size`, `info_line1`, `info_line2`, and `info_line3`; emission strip
   values are rounded to 2 decimal places
+- Export also writes a `dcp_config.gd` GDScript class (`class_name DCPConfig`,
+  extends `RefCounted`) with the same values as typed constants
+  (`ALBEDO_IMAGE_NAME`, `MATERIAL_IMAGE_NAME`, `COLOR_COLUMNS`, `COLOR_ROWS`,
+  `CELL_SIZE`, `EMISSION_FACTOR`, `EMISSION_STRIPS`, `INFO_LINE1/2/3`);
+  ready to use in Godot 4 without manual copy-paste
 
 ## [2.0.7] – 2026-03-31
 

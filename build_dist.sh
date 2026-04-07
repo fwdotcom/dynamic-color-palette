@@ -2,13 +2,22 @@
 # Build distribution ZIPs for itch.io release.
 #
 # Output:
-#   dist/zip/dynamic_color_palette.zip                  -- Blender addon (flat, __pycache__ excluded)
-#   dist/zip/dynamic_color_palette_godot_shader.zip     -- Godot 4 shader
+#   dist/dynamic_color_palette-<version>-<branch>.zip
+#   dist/dynamic_color_palette_godot_shader-<version>-<branch>.zip
 
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")" && pwd)"
-DIST="$ROOT/dist/zip"
+DIST="$ROOT/dist"
+
+# Version from bl_info in __init__.py
+VERSION=$(grep -oP '"version":\s+\(\K\d+,\s*\d+,\s*\d+(?=\))' \
+    "$ROOT/dynamic_color_palette/__init__.py" | tr -d ' ' | tr ',' '.')
+
+# Current git branch
+BRANCH=$(git -C "$ROOT" rev-parse --abbrev-ref HEAD)
+
+SUFFIX="-${VERSION}-${BRANCH}"
 
 build_zip() {
     local label="$1"
@@ -34,20 +43,20 @@ build_zip() {
 
 mkdir -p "$DIST"
 echo ""
-echo "Building dist ZIPs..."
+echo "Building dist ZIPs (v${VERSION}, branch: ${BRANCH})..."
 echo ""
 
 build_zip \
-    "dist/zip/dynamic_color_palette.zip" \
+    "dist/dynamic_color_palette${SUFFIX}.zip" \
     "$ROOT/dynamic_color_palette" \
-    "$DIST/dynamic_color_palette.zip"
+    "$DIST/dynamic_color_palette${SUFFIX}.zip"
 
 echo ""
 
 build_zip \
-    "dist/zip/dynamic_color_palette_godot_shader.zip" \
+    "dist/dynamic_color_palette_godot_shader${SUFFIX}.zip" \
     "$ROOT/godot_4_shader" \
-    "$DIST/dynamic_color_palette_godot_shader.zip"
+    "$DIST/dynamic_color_palette_godot_shader${SUFFIX}.zip"
 
 echo ""
 echo "Done."
