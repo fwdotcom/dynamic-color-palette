@@ -34,7 +34,7 @@ import bpy
 from bpy.types import Operator
 from bpy.props import BoolProperty
 
-from .. import MAX_EMISSION_STRIPS, DEFAULT_EMISSION_STRIPS
+from .. import MAX_EMISSION_STRIPS, DEFAULT_EMISSION_STRIPS, PREFIX
 
 
 def _register_wm_props() -> None:
@@ -206,7 +206,15 @@ class DCP_OT_OpenConfig(Operator):
         box, open_ = _section(layout, wm, "dcp_cfg_export_open",
                                "Export", "EXPORT")
         if open_:
-            box.prop(props, "file_save_path")
+            col = box.column(align=True)
+            col.prop(props, "textures_export_dir",
+                     text=f"Export {PREFIX}albedo.png / {PREFIX}material.png")
+            col.prop(props, "json_export_dir",
+                     text=f"Export {PREFIX}config.json")
+            col.prop(props, "gdshader_export_dir",
+                     text="Export dcp_multicol.gdshader")
+            col.prop(props, "gdutilclass_export_dir",
+                     text="Export dcp_util.gd")
 
         # ---- Info Quadrant ---------------------------------------------
         box, open_ = _section(layout, wm, "dcp_cfg_info_open",

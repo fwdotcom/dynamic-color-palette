@@ -3,7 +3,6 @@
 #
 # Output:
 #   dist/dynamic_color_palette-<version>-<branch>.zip
-#   dist/dynamic_color_palette_godot_shader-<version>-<branch>.zip
 
 set -euo pipefail
 
@@ -50,13 +49,6 @@ build_zip \
     "dist/dynamic_color_palette${SUFFIX}.zip" \
     "$ROOT/dynamic_color_palette" \
     "$DIST/dynamic_color_palette${SUFFIX}.zip"
-
-echo ""
-
-build_zip \
-    "dist/dynamic_color_palette_godot_shader${SUFFIX}.zip" \
-    "$ROOT/godot_4_shader" \
-    "$DIST/dynamic_color_palette_godot_shader${SUFFIX}.zip"
 
 echo ""
 echo "Done."

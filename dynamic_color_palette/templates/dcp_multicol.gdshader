@@ -37,7 +37,7 @@ uniform sampler2D material_tex : hint_default_black, filter_nearest, repeat_disa
 // Multiplier applied on top of the B channel value from material_tex.
 // Useful for animating or globally scaling emission at runtime without
 // modifying the texture. Set to 1.0 to use the raw texture value directly.
-uniform float emission_scale : hint_range(0.0, 16.0, 0.01) = 1.0;
+uniform float emission_factor : hint_range(0.0, 16.0, 0.01) = {emission_factor};
 
 
 void fragment() {
@@ -58,7 +58,7 @@ void fragment() {
 
     // ── Emission ──────────────────────────────────────────────────────────────
     // Emission color is the albedo color tinted by the emission strength (B channel).
-    // Multiply by emission_scale for runtime control.
-    float emission_strength = material_sample.b * emission_scale;
+    // Multiply by emission_factor for runtime control.
+    float emission_strength = material_sample.b * emission_factor;
     EMISSION = albedo_sample.rgb * emission_strength;
 }

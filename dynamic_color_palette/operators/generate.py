@@ -45,7 +45,8 @@ from .. import (
     DEFAULT_METAL_ROUGHNESS, DEFAULT_METAL_METALNESS,
     DEFAULT_EMISSION_ROUGHNESS, DEFAULT_EMISSION_METALNESS,
     DEFAULT_EMISSION_FACTOR, DEFAULT_EMISSION_STRIPS,
-    DEFAULT_FILE_SAVE_PATH,
+    DEFAULT_TEXTURES_EXPORT_DIR, DEFAULT_JSON_EXPORT_DIR,
+    DEFAULT_GDSHADER_EXPORT_DIR, DEFAULT_GDUTILCLASS_EXPORT_DIR,
     DEFAULT_INFO_LINE_1, DEFAULT_INFO_LINE_2, DEFAULT_INFO_LINE_3,
     DEFAULT_BG_HEX, DEFAULT_FG_HEX,
 )
@@ -171,7 +172,7 @@ def _run_generate(operator, context, props) -> None:
 
     Pipeline steps:
 
-    1. Resolve and validate ``file_save_path``.
+    1. Resolve and validate the four export directories.
     2. Compute the full palette colour grid.
     3. Render and (optionally save) ``dcp_albedo`` via :func:`~textures._render_sheet`.
     4. Render and (optionally save) ``dcp_material`` via :func:`~textures._render_sheet`.
@@ -186,13 +187,17 @@ def _run_generate(operator, context, props) -> None:
         context: The current Blender context.
         props: ``DCPProperties`` instance from the active scene.
     """
-    save_path = props.file_save_path.strip() or None
-    if save_path:
-        save_path = bpy.path.abspath(save_path)
-        if not os.path.isdir(save_path):
-            operator.report({"WARNING"},
-                            f"Export path not found: {save_path}")
-            save_path = None
+    def _resolve_dir(raw: str, label: str):
+        path = bpy.path.abspath(raw.strip()) if raw.strip() else None
+        if path and not os.path.isdir(path):
+            operator.report({"WARNING"}, f"Export path not found ({label}): {path}")
+            return None
+        return path
+
+    texture_dir  = _resolve_dir(props.textures_export_dir,    "Textures")
+    config_dir   = _resolve_dir(props.json_export_dir,        "JSON Config")
+    shader_dir   = _resolve_dir(props.gdshader_export_dir,    "GDShader")
+    util_dir     = _resolve_dir(props.gdutilclass_export_dir, "GDScript Util")
 
     colors = get_palette_colors(props)
 
@@ -205,7 +210,7 @@ def _run_generate(operator, context, props) -> None:
                                colors_loc, cs,
                                props.color_columns, props.color_rows)
 
-    img_albedo = _render_sheet(props, ALBEDO_IMAGE_NAME, draw_albedo, colors, save_path)
+    img_albedo = _render_sheet(props, ALBEDO_IMAGE_NAME, draw_albedo, colors, texture_dir)
 
     mat_cfg = [
         (props.solid_roughness,    props.solid_metalness,    False),
@@ -219,7 +224,7 @@ def _run_generate(operator, context, props) -> None:
             _draw_material_tile(shader, px, py + layout.text_height,
                                 r, m, is_em, props, cs)
 
-    img_matmap = _render_sheet(props, MATERIAL_IMAGE_NAME, draw_material, colors, save_path)
+    img_matmap = _render_sheet(props, MATERIAL_IMAGE_NAME, draw_material, colors, texture_dir)
 
     _render_picker_image(props, colors)
     _build_picker_preview()
@@ -236,49 +241,54 @@ def _run_generate(operator, context, props) -> None:
     _recompute_preview(props)
     _write_snapshot(props)
 
-    if save_path:
+    _tmpl_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "templates")
+
+    if config_dir:
         config_data = {
-            "albedo_image_name":  ALBEDO_IMAGE_NAME,
+            "albedo_image_name":   ALBEDO_IMAGE_NAME,
             "material_image_name": MATERIAL_IMAGE_NAME,
-            "emission_strips":    [round(e.value, 2) for e in props.emission_strengths],
-            "emission_factor":    props.emission_factor,
-            "color_columns":      props.color_columns,
-            "color_rows":         props.color_rows,
-            "cell_size":          cs,
-            "info_line1":         props.info_line_1,
-            "info_line2":         props.info_line_2,
-            "info_line3":         props.info_line_3,
+            "emission_strips":     [round(e.value, 2) for e in props.emission_strengths],
+            "emission_factor":     props.emission_factor,
+            "color_columns":       props.color_columns,
+            "color_rows":          props.color_rows,
+            "cell_size":           cs,
+            "info_line1":          props.info_line_1,
+            "info_line2":          props.info_line_2,
+            "info_line3":          props.info_line_3,
         }
-        config_path = os.path.join(save_path, PREFIX + "config.json")
-        with open(config_path, "w", encoding="utf-8") as fh:
+        with open(os.path.join(config_dir, PREFIX + "config.json"), "w", encoding="utf-8") as fh:
             json.dump(config_data, fh, indent=2)
 
+    if shader_dir:
+        with open(os.path.join(_tmpl_dir, "dcp_multicol.gdshader"), encoding="utf-8") as fh:
+            shader_text = fh.read().format(
+                PREFIX=PREFIX,
+                emission_factor=f"{props.emission_factor:.6g}",
+            )
+        with open(os.path.join(shader_dir, "dcp_multicol.gdshader"), "w", encoding="utf-8") as fh:
+            fh.write(shader_text)
+
+    if util_dir:
         strips_gd = "[" + ", ".join(
             f"{e.value:.2f}" for e in props.emission_strengths
         ) + "]"
-        gd_lines = [
-            "class_name DCPConfig",
-            "extends RefCounted",
-            "",
-            f"## Constants for DCP-Textures",
-            "",
-            f"## Generated by Dynamic Color Palette v{VERSION}",
-            "",
-            f'const ALBEDO_IMAGE_NAME: String = "{ALBEDO_IMAGE_NAME}"',
-            f'const MATERIAL_IMAGE_NAME: String = "{MATERIAL_IMAGE_NAME}"',
-            f"const COLOR_COLUMNS: int = {props.color_columns}",
-            f"const COLOR_ROWS: int = {props.color_rows}",
-            f"const CELL_SIZE: int = {cs}",
-            f"const EMISSION_FACTOR: float = {props.emission_factor:.6g}",
-            f"const EMISSION_STRIPS: Array[float] = {strips_gd}",
-            f'const INFO_LINE1: String = "{props.info_line_1}"',
-            f'const INFO_LINE2: String = "{props.info_line_2}"',
-            f'const INFO_LINE3: String = "{props.info_line_3}"',
-            "",
-        ]
-        gd_path = os.path.join(save_path, PREFIX + "config.gd")
-        with open(gd_path, "w", encoding="utf-8") as fh:
-            fh.write("\n".join(gd_lines))
+        with open(os.path.join(_tmpl_dir, "dcp_util.gd"), encoding="utf-8") as fh:
+            tmpl = fh.read()
+        gd_text = tmpl.format(
+            version=VERSION,
+            albedo_image_name=ALBEDO_IMAGE_NAME,
+            material_image_name=MATERIAL_IMAGE_NAME,
+            color_columns=props.color_columns,
+            color_rows=props.color_rows,
+            cell_size=cs,
+            emission_factor=f"{props.emission_factor:.6g}",
+            emission_strips=strips_gd,
+            info_line1=props.info_line_1,
+            info_line2=props.info_line_2,
+            info_line3=props.info_line_3,
+        )
+        with open(os.path.join(util_dir, "dcp_util.gd"), "w", encoding="utf-8") as fh:
+            fh.write(gd_text)
 
     operator.report({"INFO"}, "Palette generated.")
     show_picker_in_image_editor(context)
@@ -392,7 +402,10 @@ class DCP_OT_ResetDefaults(Operator):
         props.emission_roughness = DEFAULT_EMISSION_ROUGHNESS
         props.emission_metalness = DEFAULT_EMISSION_METALNESS
         props.emission_factor    = DEFAULT_EMISSION_FACTOR
-        props.file_save_path     = DEFAULT_FILE_SAVE_PATH
+        props.textures_export_dir    = DEFAULT_TEXTURES_EXPORT_DIR
+        props.json_export_dir        = DEFAULT_JSON_EXPORT_DIR
+        props.gdshader_export_dir    = DEFAULT_GDSHADER_EXPORT_DIR
+        props.gdutilclass_export_dir = DEFAULT_GDUTILCLASS_EXPORT_DIR
 
         props.emission_strengths.clear()
         for v in DEFAULT_EMISSION_STRIPS:

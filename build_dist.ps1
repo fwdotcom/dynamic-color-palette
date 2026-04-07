@@ -2,7 +2,6 @@
 #
 # Output:
 #   dist/zip/dynamic_color_palette-<version>-<branch>.zip
-#   dist/zip/dynamic_color_palette_godot_shader-<version>-<branch>.zip
 
 $Root = $PSScriptRoot
 $Dist = Join-Path $Root "dist"
@@ -62,12 +61,5 @@ Build-Zip `
     -Label  "dist\dynamic_color_palette$Suffix.zip" `
     -SrcDir (Join-Path $Root "dynamic_color_palette") `
     -OutFile (Join-Path $Dist "dynamic_color_palette$Suffix.zip")
-
-Write-Host ""
-
-Build-Zip `
-    -Label  "dist\dynamic_color_palette_godot_shader$Suffix.zip" `
-    -SrcDir (Join-Path $Root "godot_4_shader") `
-    -OutFile (Join-Path $Dist "dynamic_color_palette_godot_shader$Suffix.zip")
 
 Write-Host "`nDone."

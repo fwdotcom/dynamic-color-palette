@@ -98,8 +98,11 @@ DEFAULT_CELL_SIZE_MIN      = 9
 # Font size used for info-quadrant text rendering (points).
 DEFAULT_FONT_SIZE          = 10
 
-# Default export directory (empty = no auto-export).
-DEFAULT_FILE_SAVE_PATH     = ""
+# Default export directories (empty = skip that export).
+DEFAULT_TEXTURES_EXPORT_DIR    = ""   # dcp_albedo.png + dcp_material.png
+DEFAULT_JSON_EXPORT_DIR        = ""   # dcp_config.json
+DEFAULT_GDSHADER_EXPORT_DIR    = ""   # dcp_multicol.gdshader
+DEFAULT_GDUTILCLASS_EXPORT_DIR = ""   # dcp_util.gd
 
 # Default info-quadrant text lines shown in the generated texture.
 DEFAULT_INFO_LINE_1        = "YOUR PROJECT NAME"
