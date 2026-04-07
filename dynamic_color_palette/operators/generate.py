@@ -188,8 +188,11 @@ def _run_generate(operator, context, props) -> None:
         props: ``DCPProperties`` instance from the active scene.
     """
     def _resolve_dir(raw: str, label: str):
-        path = bpy.path.abspath(raw.strip()) if raw.strip() else None
-        if path and not os.path.isdir(path):
+        stripped = raw.strip()
+        if not stripped or stripped == "//":
+            return None
+        path = bpy.path.abspath(stripped)
+        if not os.path.isdir(path):
             operator.report({"WARNING"}, f"Export path not found ({label}): {path}")
             return None
         return path
@@ -260,12 +263,44 @@ def _run_generate(operator, context, props) -> None:
             json.dump(config_data, fh, indent=2)
 
     if shader_dir:
+        ef_str   = f"{props.emission_factor:.6g}"
+        n_strips = len(props.emission_strengths)
+        base     = cs // n_strips
+        rem      = cs % n_strips
+        strip_h  = [base + (1 if i < rem else 0) for i in range(n_strips)]
+        img_w, img_h = img_albedo.size[0], img_albedo.size[1]
+        pal_w  = props.color_columns * cs
+        pal_h  = props.color_rows    * cs
+        text_h = cs * 2
+        panel_h = pal_h + text_h
+
         with open(os.path.join(_tmpl_dir, "dcp_multicol.gdshader"), encoding="utf-8") as fh:
             shader_text = fh.read() \
+                .replace("{version}", VERSION) \
                 .replace("{PREFIX}", PREFIX) \
-                .replace("{emission_factor}", f"{props.emission_factor:.6g}")
-        with open(os.path.join(shader_dir, "dcp_multicol.gdshader"), "w", encoding="utf-8") as fh:
+                .replace("{emission_factor}", ef_str)
+        with open(os.path.join(shader_dir, PREFIX + "multicol.gdshader"), "w", encoding="utf-8") as fh:
             fh.write(shader_text)
+
+        with open(os.path.join(_tmpl_dir, "dcp_singlecol.gdshader"), encoding="utf-8") as fh:
+            sc_text = fh.read() \
+                .replace("{version}",          VERSION) \
+                .replace("{PREFIX}",           PREFIX) \
+                .replace("{img_w}",            str(img_w)) \
+                .replace("{img_h}",            str(img_h)) \
+                .replace("{cols}",             str(props.color_columns)) \
+                .replace("{rows}",             str(props.color_rows)) \
+                .replace("{cs}",              str(cs)) \
+                .replace("{margin}",           str(cs)) \
+                .replace("{pal_w}",            str(pal_w)) \
+                .replace("{pal_h}",            str(pal_h)) \
+                .replace("{text_h}",           str(text_h)) \
+                .replace("{panel_h}",          str(panel_h)) \
+                .replace("{n_strips}",          str(n_strips)) \
+                .replace("{strip_heights_csv}", ", ".join(str(h) for h in strip_h)) \
+                .replace("{emission_factor}",  ef_str)
+        with open(os.path.join(shader_dir, PREFIX + "singlecol.gdshader"), "w", encoding="utf-8") as fh:
+            fh.write(sc_text)
 
     if util_dir:
         strips_gd = "[" + ", ".join(

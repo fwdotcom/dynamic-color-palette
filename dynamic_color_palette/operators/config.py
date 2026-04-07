@@ -34,7 +34,7 @@ import bpy
 from bpy.types import Operator
 from bpy.props import BoolProperty
 
-from .. import MAX_EMISSION_STRIPS, DEFAULT_EMISSION_STRIPS, PREFIX
+from .. import MAX_EMISSION_STRIPS, DEFAULT_EMISSION_STRIPS
 
 
 def _register_wm_props() -> None:
@@ -208,10 +208,10 @@ class DCP_OT_OpenConfig(Operator):
         if open_:
             col = box.column(align=False)
             for label, attr in (
-                (f"{PREFIX}albedo.png / {PREFIX}material.png", "textures_export_dir"),
-                (f"{PREFIX}config.json",                       "json_export_dir"),
-                ("dcp_multicol.gdshader",                      "gdshader_export_dir"),
-                ("dcp_util.gd",                                "gdutilclass_export_dir"),
+                ("Textures Path",       "textures_export_dir"),
+                ("JSON Path",           "json_export_dir"),
+                ("Godot 4 Shader Path", "gdshader_export_dir"),
+                ("DCPUtil Class Path",  "gdutilclass_export_dir"),
             ):
                 col.label(text=label)
                 col.prop(props, attr, text="")

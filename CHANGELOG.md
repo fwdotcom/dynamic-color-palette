@@ -23,6 +23,11 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   ready to use in Godot 4 without manual copy-paste
 - Export also writes `dcp_multicol.gdshader` — the Godot 4 spatial shader for
   the DCP multicol workflow; previously shipped as a separate download
+- Export also writes `dcp_singlecol.gdshader` — a Godot 4 spatial shader that
+  computes the palette UV at runtime from int uniforms (`quadrant`, `cell_x`,
+  `cell_y`, `emission_strip`); all layout constants (texture size, cell size,
+  strip heights) are baked in at export time; useful for runtime color changes
+  without modifying mesh UVs
 - The single export path is replaced by four independent export directories
   (Textures, JSON Config, GDShader, GDScript Util); each can be set or left
   empty independently
