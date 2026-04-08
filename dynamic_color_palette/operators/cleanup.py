@@ -46,6 +46,10 @@ class DCP_OT_Cleanup(Operator):
     bl_description = "Remove unused material slots and orphaned materials."
     bl_options = {"UNDO"}
 
+    @classmethod
+    def poll(cls, context) -> bool:
+        return context.mode in {"OBJECT", "EDIT_MESH"}
+
     def execute(self, context) -> set:
         """Run the cleanup loop on all target objects.
 
@@ -85,7 +89,7 @@ class DCP_OT_Cleanup(Operator):
                 total_mats  += m
         finally:
             context.view_layer.objects.active = orig_active
-            if old_mode != "OBJECT":
+            if old_mode == "EDIT_MESH":
                 bpy.ops.object.mode_set(mode="EDIT")
 
         self.report({"INFO"},

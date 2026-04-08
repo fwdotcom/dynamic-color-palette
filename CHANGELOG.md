@@ -3,7 +3,47 @@
 All notable changes to Dynamic Color Palette are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [Unreleased]
+## [2.1.0] – 2026-04-08
+
+### Fixed
+- Pick From Image Editor is now reset to OFF when a blend file is opened —
+  previously a saved ON state would show the button as active without a running
+  modal operator
+- Minor bugfixes
+
+### Added
+- Export now writes a `dcp_config.json` alongside the palette textures when an
+  export path is set; contains `albedo_image_name`, `material_image_name`,
+  `emission_strips`, `emission_factor`, `color_columns`, `color_rows`,
+  `cell_size`, `info_line1`, `info_line2`, and `info_line3`; emission strip
+  values are rounded to 2 decimal places
+- Export also writes a `dcp_util.gd` GDScript class (`class_name DCPUtil`,
+  extends `RefCounted`) with the same values as typed constants
+  (`ALBEDO_IMAGE_NAME`, `MATERIAL_IMAGE_NAME`, `COLOR_COLUMNS`, `COLOR_ROWS`,
+  `CELL_SIZE`, `EMISSION_FACTOR`, `EMISSION_STRIPS`, `INFO_LINE1/2/3`);
+  ready to use in Godot 4 without manual copy-paste
+- Export also writes `dcp_multicol.gdshader` — the Godot 4 spatial shader for
+  the DCP multicol workflow; previously shipped as a separate download
+- Export also writes `dcp_singlecol.gdshader` — a Godot 4 spatial shader that
+  computes the palette UV at runtime from int uniforms (`quadrant`, `cell_x`,
+  `cell_y`, `emission_strip`); all layout constants (texture size, cell size,
+  strip heights) are baked in at export time; useful for runtime color changes
+  without modifying mesh UVs
+- The single export path is replaced by four independent export directories
+  (Textures, JSON Config, GDShader, GDScript Util); each can be set or left
+  empty independently
+
+### Changed
+- GDScript export class renamed from `DCPConfig` / `dcp_config.gd` to
+  `DCPUtil` / `dcp_util.gd`
+- Godot shader renamed from `dynamic_color_palette.gdshader` to
+  `dcp_multicol.gdshader` to match the DCP naming convention; uniform
+  `emission_scale` renamed to `emission_factor`, default value set from the
+  addon's Emission Factor property at export time
+- Shader and GDScript util files are generated from templates in
+  `dynamic_color_palette/templates/`
+- `godot_4_shader/` distribution package removed — shader files are now
+  exported directly from the addon; only the LICENSE remains for reference
 
 ## [2.0.7] – 2026-03-31
 

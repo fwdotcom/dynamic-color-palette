@@ -46,7 +46,9 @@ from . import (
     DEFAULT_SOLID_ROUGHNESS, DEFAULT_SOLID_METALNESS,
     DEFAULT_METAL_ROUGHNESS, DEFAULT_METAL_METALNESS,
     DEFAULT_EMISSION_ROUGHNESS, DEFAULT_EMISSION_METALNESS,
-    DEFAULT_EMISSION_FACTOR, DEFAULT_FILE_SAVE_PATH,
+    DEFAULT_EMISSION_FACTOR,
+    DEFAULT_TEXTURES_EXPORT_DIR, DEFAULT_JSON_EXPORT_DIR,
+    DEFAULT_GDSHADER_EXPORT_DIR, DEFAULT_GDUTILCLASS_EXPORT_DIR,
     DEFAULT_INFO_LINE_1, DEFAULT_INFO_LINE_2, DEFAULT_INFO_LINE_3,
     DEFAULT_BG_HEX, DEFAULT_FG_HEX,
 )
@@ -257,7 +259,7 @@ class DCPProperties(PropertyGroup):
         entries.  Each strip subdivides the emission cell vertically and
         carries a normalised strength value.
 
-    **Export** (``file_save_path``)
+    **Export** (``textures_export_dir``, ``json_export_dir``, ``gdshader_export_dir``, ``gdutilclass_export_dir``)
         Optional filesystem directory; when set, generated textures are saved
         as PNG files there.
 
@@ -325,9 +327,18 @@ class DCPProperties(PropertyGroup):
     emission_strengths : CollectionProperty(type=DCPEmissionEntry)
 
     # ---- Export -----------------------------------------------------------
-    file_save_path : StringProperty(name="Export Path",
-                                    default=DEFAULT_FILE_SAVE_PATH,
-                                    subtype="DIR_PATH")
+    textures_export_dir    : StringProperty(name="Textures",
+                                            default=DEFAULT_TEXTURES_EXPORT_DIR,
+                                            subtype="DIR_PATH")
+    json_export_dir        : StringProperty(name="JSON Config",
+                                            default=DEFAULT_JSON_EXPORT_DIR,
+                                            subtype="DIR_PATH")
+    gdshader_export_dir    : StringProperty(name="GDShader",
+                                            default=DEFAULT_GDSHADER_EXPORT_DIR,
+                                            subtype="DIR_PATH")
+    gdutilclass_export_dir : StringProperty(name="GDScript Util",
+                                            default=DEFAULT_GDUTILCLASS_EXPORT_DIR,
+                                            subtype="DIR_PATH")
 
     # ---- Info Quadrant ----------------------------------------------------
     info_line_1 : StringProperty(name="Project",  default=DEFAULT_INFO_LINE_1)

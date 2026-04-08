@@ -206,7 +206,15 @@ class DCP_OT_OpenConfig(Operator):
         box, open_ = _section(layout, wm, "dcp_cfg_export_open",
                                "Export", "EXPORT")
         if open_:
-            box.prop(props, "file_save_path")
+            col = box.column(align=False)
+            for label, attr in (
+                ("Textures Path",       "textures_export_dir"),
+                ("JSON Path",           "json_export_dir"),
+                ("Godot 4 Shader Path", "gdshader_export_dir"),
+                ("DCPUtil Class Path",  "gdutilclass_export_dir"),
+            ):
+                col.label(text=label)
+                col.prop(props, attr, text="")
 
         # ---- Info Quadrant ---------------------------------------------
         box, open_ = _section(layout, wm, "dcp_cfg_info_open",

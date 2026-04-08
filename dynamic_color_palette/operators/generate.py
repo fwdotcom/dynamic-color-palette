@@ -30,12 +30,15 @@ Core generation logic (``_run_generate``)
 """
 from __future__ import annotations
 
+import datetime
+import json
 import os
 
 import bpy
 from bpy.types import Operator
 
 from .. import (
+    PREFIX, VERSION,
     ALBEDO_IMAGE_NAME, MATERIAL_IMAGE_NAME,
     DEFAULT_COLOR_COLUMNS, DEFAULT_COLOR_ROWS,
     DEFAULT_PASTEL_SATURATION, DEFAULT_SHADOW_VALUE,
@@ -43,7 +46,8 @@ from .. import (
     DEFAULT_METAL_ROUGHNESS, DEFAULT_METAL_METALNESS,
     DEFAULT_EMISSION_ROUGHNESS, DEFAULT_EMISSION_METALNESS,
     DEFAULT_EMISSION_FACTOR, DEFAULT_EMISSION_STRIPS,
-    DEFAULT_FILE_SAVE_PATH,
+    DEFAULT_TEXTURES_EXPORT_DIR, DEFAULT_JSON_EXPORT_DIR,
+    DEFAULT_GDSHADER_EXPORT_DIR, DEFAULT_GDUTILCLASS_EXPORT_DIR,
     DEFAULT_INFO_LINE_1, DEFAULT_INFO_LINE_2, DEFAULT_INFO_LINE_3,
     DEFAULT_BG_HEX, DEFAULT_FG_HEX,
 )
@@ -169,7 +173,7 @@ def _run_generate(operator, context, props) -> None:
 
     Pipeline steps:
 
-    1. Resolve and validate ``file_save_path``.
+    1. Resolve and validate the four export directories.
     2. Compute the full palette colour grid.
     3. Render and (optionally save) ``dcp_albedo`` via :func:`~textures._render_sheet`.
     4. Render and (optionally save) ``dcp_material`` via :func:`~textures._render_sheet`.
@@ -184,13 +188,20 @@ def _run_generate(operator, context, props) -> None:
         context: The current Blender context.
         props: ``DCPProperties`` instance from the active scene.
     """
-    save_path = props.file_save_path.strip() or None
-    if save_path:
-        save_path = bpy.path.abspath(save_path)
-        if not os.path.isdir(save_path):
-            operator.report({"WARNING"},
-                            f"Export path not found: {save_path}")
-            save_path = None
+    def _resolve_dir(raw: str, label: str):
+        stripped = raw.strip()
+        if not stripped or stripped == "//":
+            return None
+        path = bpy.path.abspath(stripped)
+        if not os.path.isdir(path):
+            operator.report({"WARNING"}, f"Export path not found ({label}): {path}")
+            return None
+        return path
+
+    texture_dir  = _resolve_dir(props.textures_export_dir,    "Textures")
+    config_dir   = _resolve_dir(props.json_export_dir,        "JSON Config")
+    shader_dir   = _resolve_dir(props.gdshader_export_dir,    "GDShader")
+    util_dir     = _resolve_dir(props.gdutilclass_export_dir, "GDScript Util")
 
     colors = get_palette_colors(props)
 
@@ -203,7 +214,7 @@ def _run_generate(operator, context, props) -> None:
                                colors_loc, cs,
                                props.color_columns, props.color_rows)
 
-    img_albedo = _render_sheet(props, ALBEDO_IMAGE_NAME, draw_albedo, colors, save_path)
+    img_albedo = _render_sheet(props, ALBEDO_IMAGE_NAME, draw_albedo, colors, texture_dir)
 
     mat_cfg = [
         (props.solid_roughness,    props.solid_metalness,    False),
@@ -217,7 +228,7 @@ def _run_generate(operator, context, props) -> None:
             _draw_material_tile(shader, px, py + layout.text_height,
                                 r, m, is_em, props, cs)
 
-    img_matmap = _render_sheet(props, MATERIAL_IMAGE_NAME, draw_material, colors, save_path)
+    img_matmap = _render_sheet(props, MATERIAL_IMAGE_NAME, draw_material, colors, texture_dir)
 
     _render_picker_image(props, colors)
     _build_picker_preview()
@@ -233,6 +244,99 @@ def _run_generate(operator, context, props) -> None:
 
     _recompute_preview(props)
     _write_snapshot(props)
+
+    _tmpl_dir  = os.path.join(os.path.dirname(os.path.dirname(__file__)), "templates")
+    _timestamp = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+    if config_dir:
+        config_data = {
+            "dcp_version":         VERSION,
+            "created_at":          _timestamp,
+            "albedo_image_name":   ALBEDO_IMAGE_NAME,
+            "material_image_name": MATERIAL_IMAGE_NAME,
+            "emission_strips":     [round(e.value, 2) for e in props.emission_strengths],
+            "emission_factor":     props.emission_factor,
+            "color_columns":       props.color_columns,
+            "color_rows":          props.color_rows,
+            "cell_size":           cs,
+            "info_line1":          props.info_line_1,
+            "info_line2":          props.info_line_2,
+            "info_line3":          props.info_line_3,
+        }
+        try:
+            with open(os.path.join(config_dir, PREFIX + "config.json"), "w", encoding="utf-8") as fh:
+                json.dump(config_data, fh, indent=2)
+        except OSError as exc:
+            operator.report({"WARNING"}, f"JSON export failed: {exc}")
+
+    if shader_dir:
+        ef_str   = f"{props.emission_factor:.6g}"
+        n_strips = len(props.emission_strengths)
+        base     = cs // n_strips
+        rem      = cs % n_strips
+        strip_h  = [base + (1 if i < rem else 0) for i in range(n_strips)]
+        img_w, img_h = img_albedo.size[0], img_albedo.size[1]
+        pal_w  = props.color_columns * cs
+        pal_h  = props.color_rows    * cs
+        text_h = cs * 2
+        panel_h = pal_h + text_h
+
+        try:
+            with open(os.path.join(_tmpl_dir, "dcp_multicol.gdshader"), encoding="utf-8") as fh:
+                shader_text = fh.read() \
+                    .replace("{version}", VERSION) \
+                    .replace("{PREFIX}", PREFIX) \
+                    .replace("{emission_factor}", ef_str)
+            with open(os.path.join(shader_dir, PREFIX + "multicol.gdshader"), "w", encoding="utf-8") as fh:
+                fh.write(shader_text)
+
+            with open(os.path.join(_tmpl_dir, "dcp_singlecol.gdshader"), encoding="utf-8") as fh:
+                sc_text = fh.read() \
+                    .replace("{version}",          VERSION) \
+                    .replace("{PREFIX}",           PREFIX) \
+                    .replace("{img_w}",            str(img_w)) \
+                    .replace("{img_h}",            str(img_h)) \
+                    .replace("{cols}",             str(props.color_columns)) \
+                    .replace("{rows}",             str(props.color_rows)) \
+                    .replace("{cs}",              str(cs)) \
+                    .replace("{margin}",           str(cs)) \
+                    .replace("{pal_w}",            str(pal_w)) \
+                    .replace("{pal_h}",            str(pal_h)) \
+                    .replace("{text_h}",           str(text_h)) \
+                    .replace("{panel_h}",          str(panel_h)) \
+                    .replace("{n_strips}",          str(n_strips)) \
+                    .replace("{strip_heights_csv}", ", ".join(str(h) for h in strip_h)) \
+                    .replace("{emission_factor}",  ef_str)
+            with open(os.path.join(shader_dir, PREFIX + "singlecol.gdshader"), "w", encoding="utf-8") as fh:
+                fh.write(sc_text)
+        except OSError as exc:
+            operator.report({"WARNING"}, f"GDShader export failed: {exc}")
+
+    if util_dir:
+        strips_gd = "[" + ", ".join(
+            f"{e.value:.2f}" for e in props.emission_strengths
+        ) + "]"
+        try:
+            with open(os.path.join(_tmpl_dir, "dcp_util.gd"), encoding="utf-8") as fh:
+                tmpl = fh.read()
+            gd_text = tmpl.format(
+                version=VERSION,
+                created_at=_timestamp,
+                albedo_image_name=ALBEDO_IMAGE_NAME,
+                material_image_name=MATERIAL_IMAGE_NAME,
+                color_columns=props.color_columns,
+                color_rows=props.color_rows,
+                cell_size=cs,
+                emission_factor=f"{props.emission_factor:.6g}",
+                emission_strips=strips_gd,
+                info_line1=props.info_line_1,
+                info_line2=props.info_line_2,
+                info_line3=props.info_line_3,
+            )
+            with open(os.path.join(util_dir, "dcp_util.gd"), "w", encoding="utf-8") as fh:
+                fh.write(gd_text)
+        except OSError as exc:
+            operator.report({"WARNING"}, f"GDScript util export failed: {exc}")
 
     operator.report({"INFO"}, "Palette generated.")
     show_picker_in_image_editor(context)
@@ -297,7 +401,7 @@ class DCP_OT_GeneratePalette(Operator):
         if props.palette_generated:
             warn = _needs_confirmation(props)
             if warn:
-                _pending_generation.update(warn)
+                _pending_generation = dict(warn)
                 bpy.ops.dcp.confirm_regenerate("INVOKE_DEFAULT")
                 return {"FINISHED"}
             # No relevant changes – regenerate directly without dialog.
@@ -346,7 +450,10 @@ class DCP_OT_ResetDefaults(Operator):
         props.emission_roughness = DEFAULT_EMISSION_ROUGHNESS
         props.emission_metalness = DEFAULT_EMISSION_METALNESS
         props.emission_factor    = DEFAULT_EMISSION_FACTOR
-        props.file_save_path     = DEFAULT_FILE_SAVE_PATH
+        props.textures_export_dir    = DEFAULT_TEXTURES_EXPORT_DIR
+        props.json_export_dir        = DEFAULT_JSON_EXPORT_DIR
+        props.gdshader_export_dir    = DEFAULT_GDSHADER_EXPORT_DIR
+        props.gdutilclass_export_dir = DEFAULT_GDUTILCLASS_EXPORT_DIR
 
         props.emission_strengths.clear()
         for v in DEFAULT_EMISSION_STRIPS:
@@ -439,7 +546,7 @@ class DCP_OT_ConfirmRegenerate(Operator):
     def execute(self, context) -> set:
         """Commit the regeneration after user confirmation.
 
-        Clears the singlecol cache, invalidates the emission layout cache,
+        Invalidates the emission layout cache, clears the singlecol cache,
         clears :data:`_pending_generation`, and delegates to
         :func:`_run_generate`.
 
@@ -451,10 +558,6 @@ class DCP_OT_ConfirmRegenerate(Operator):
         """
         global _pending_generation
         props = context.scene.dcp_props
-
-        for attr, val in _pending_generation.items():
-            if not attr.startswith("_") and hasattr(props, attr):
-                setattr(props, attr, val)
 
         _invalidate_emission_cache()
         props.singlecol_mats.clear()
