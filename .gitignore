@@ -1,4 +1,9 @@
 __pycache__/
 *.pyc
-dist/zip/
-*.blend1
+dist/
+dist_docs/
+*.blend?
+build_dist.sh
+build_dist.ps1
+CLAUDE.md
+
