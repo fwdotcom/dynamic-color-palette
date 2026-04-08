@@ -39,3 +39,9 @@ const EMISSION_STRIPS: Array[float] = {emission_strips}
 const INFO_LINE1: String = "{info_line1}"
 const INFO_LINE2: String = "{info_line2}"
 const INFO_LINE3: String = "{info_line3}"
+
+## DCP addon version used to generate this file.
+const DCP_VERSION: String = "{version}"
+
+## UTC timestamp of when this file was generated (ISO 8601).
+const CREATED_AT: String = "{created_at}"

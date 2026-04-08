@@ -9,6 +9,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Pick From Image Editor is now reset to OFF when a blend file is opened —
   previously a saved ON state would show the button as active without a running
   modal operator
+- Minor bugfixes
 
 ### Added
 - Export now writes a `dcp_config.json` alongside the palette textures when an

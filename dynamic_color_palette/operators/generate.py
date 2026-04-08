@@ -30,6 +30,7 @@ Core generation logic (``_run_generate``)
 """
 from __future__ import annotations
 
+import datetime
 import json
 import os
 
@@ -244,10 +245,13 @@ def _run_generate(operator, context, props) -> None:
     _recompute_preview(props)
     _write_snapshot(props)
 
-    _tmpl_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "templates")
+    _tmpl_dir  = os.path.join(os.path.dirname(os.path.dirname(__file__)), "templates")
+    _timestamp = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
     if config_dir:
         config_data = {
+            "dcp_version":         VERSION,
+            "created_at":          _timestamp,
             "albedo_image_name":   ALBEDO_IMAGE_NAME,
             "material_image_name": MATERIAL_IMAGE_NAME,
             "emission_strips":     [round(e.value, 2) for e in props.emission_strengths],
@@ -259,8 +263,11 @@ def _run_generate(operator, context, props) -> None:
             "info_line2":          props.info_line_2,
             "info_line3":          props.info_line_3,
         }
-        with open(os.path.join(config_dir, PREFIX + "config.json"), "w", encoding="utf-8") as fh:
-            json.dump(config_data, fh, indent=2)
+        try:
+            with open(os.path.join(config_dir, PREFIX + "config.json"), "w", encoding="utf-8") as fh:
+                json.dump(config_data, fh, indent=2)
+        except OSError as exc:
+            operator.report({"WARNING"}, f"JSON export failed: {exc}")
 
     if shader_dir:
         ef_str   = f"{props.emission_factor:.6g}"
@@ -274,55 +281,62 @@ def _run_generate(operator, context, props) -> None:
         text_h = cs * 2
         panel_h = pal_h + text_h
 
-        with open(os.path.join(_tmpl_dir, "dcp_multicol.gdshader"), encoding="utf-8") as fh:
-            shader_text = fh.read() \
-                .replace("{version}", VERSION) \
-                .replace("{PREFIX}", PREFIX) \
-                .replace("{emission_factor}", ef_str)
-        with open(os.path.join(shader_dir, PREFIX + "multicol.gdshader"), "w", encoding="utf-8") as fh:
-            fh.write(shader_text)
+        try:
+            with open(os.path.join(_tmpl_dir, "dcp_multicol.gdshader"), encoding="utf-8") as fh:
+                shader_text = fh.read() \
+                    .replace("{version}", VERSION) \
+                    .replace("{PREFIX}", PREFIX) \
+                    .replace("{emission_factor}", ef_str)
+            with open(os.path.join(shader_dir, PREFIX + "multicol.gdshader"), "w", encoding="utf-8") as fh:
+                fh.write(shader_text)
 
-        with open(os.path.join(_tmpl_dir, "dcp_singlecol.gdshader"), encoding="utf-8") as fh:
-            sc_text = fh.read() \
-                .replace("{version}",          VERSION) \
-                .replace("{PREFIX}",           PREFIX) \
-                .replace("{img_w}",            str(img_w)) \
-                .replace("{img_h}",            str(img_h)) \
-                .replace("{cols}",             str(props.color_columns)) \
-                .replace("{rows}",             str(props.color_rows)) \
-                .replace("{cs}",              str(cs)) \
-                .replace("{margin}",           str(cs)) \
-                .replace("{pal_w}",            str(pal_w)) \
-                .replace("{pal_h}",            str(pal_h)) \
-                .replace("{text_h}",           str(text_h)) \
-                .replace("{panel_h}",          str(panel_h)) \
-                .replace("{n_strips}",          str(n_strips)) \
-                .replace("{strip_heights_csv}", ", ".join(str(h) for h in strip_h)) \
-                .replace("{emission_factor}",  ef_str)
-        with open(os.path.join(shader_dir, PREFIX + "singlecol.gdshader"), "w", encoding="utf-8") as fh:
-            fh.write(sc_text)
+            with open(os.path.join(_tmpl_dir, "dcp_singlecol.gdshader"), encoding="utf-8") as fh:
+                sc_text = fh.read() \
+                    .replace("{version}",          VERSION) \
+                    .replace("{PREFIX}",           PREFIX) \
+                    .replace("{img_w}",            str(img_w)) \
+                    .replace("{img_h}",            str(img_h)) \
+                    .replace("{cols}",             str(props.color_columns)) \
+                    .replace("{rows}",             str(props.color_rows)) \
+                    .replace("{cs}",              str(cs)) \
+                    .replace("{margin}",           str(cs)) \
+                    .replace("{pal_w}",            str(pal_w)) \
+                    .replace("{pal_h}",            str(pal_h)) \
+                    .replace("{text_h}",           str(text_h)) \
+                    .replace("{panel_h}",          str(panel_h)) \
+                    .replace("{n_strips}",          str(n_strips)) \
+                    .replace("{strip_heights_csv}", ", ".join(str(h) for h in strip_h)) \
+                    .replace("{emission_factor}",  ef_str)
+            with open(os.path.join(shader_dir, PREFIX + "singlecol.gdshader"), "w", encoding="utf-8") as fh:
+                fh.write(sc_text)
+        except OSError as exc:
+            operator.report({"WARNING"}, f"GDShader export failed: {exc}")
 
     if util_dir:
         strips_gd = "[" + ", ".join(
             f"{e.value:.2f}" for e in props.emission_strengths
         ) + "]"
-        with open(os.path.join(_tmpl_dir, "dcp_util.gd"), encoding="utf-8") as fh:
-            tmpl = fh.read()
-        gd_text = tmpl.format(
-            version=VERSION,
-            albedo_image_name=ALBEDO_IMAGE_NAME,
-            material_image_name=MATERIAL_IMAGE_NAME,
-            color_columns=props.color_columns,
-            color_rows=props.color_rows,
-            cell_size=cs,
-            emission_factor=f"{props.emission_factor:.6g}",
-            emission_strips=strips_gd,
-            info_line1=props.info_line_1,
-            info_line2=props.info_line_2,
-            info_line3=props.info_line_3,
-        )
-        with open(os.path.join(util_dir, "dcp_util.gd"), "w", encoding="utf-8") as fh:
-            fh.write(gd_text)
+        try:
+            with open(os.path.join(_tmpl_dir, "dcp_util.gd"), encoding="utf-8") as fh:
+                tmpl = fh.read()
+            gd_text = tmpl.format(
+                version=VERSION,
+                created_at=_timestamp,
+                albedo_image_name=ALBEDO_IMAGE_NAME,
+                material_image_name=MATERIAL_IMAGE_NAME,
+                color_columns=props.color_columns,
+                color_rows=props.color_rows,
+                cell_size=cs,
+                emission_factor=f"{props.emission_factor:.6g}",
+                emission_strips=strips_gd,
+                info_line1=props.info_line_1,
+                info_line2=props.info_line_2,
+                info_line3=props.info_line_3,
+            )
+            with open(os.path.join(util_dir, "dcp_util.gd"), "w", encoding="utf-8") as fh:
+                fh.write(gd_text)
+        except OSError as exc:
+            operator.report({"WARNING"}, f"GDScript util export failed: {exc}")
 
     operator.report({"INFO"}, "Palette generated.")
     show_picker_in_image_editor(context)
@@ -387,7 +401,7 @@ class DCP_OT_GeneratePalette(Operator):
         if props.palette_generated:
             warn = _needs_confirmation(props)
             if warn:
-                _pending_generation.update(warn)
+                _pending_generation = dict(warn)
                 bpy.ops.dcp.confirm_regenerate("INVOKE_DEFAULT")
                 return {"FINISHED"}
             # No relevant changes – regenerate directly without dialog.
