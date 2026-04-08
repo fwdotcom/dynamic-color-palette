@@ -1,7 +1,7 @@
 schema_version = "1.0.0"
 
 id = "dynamic_color_palette"
-version = "2.0.8"
+version = "2.1.0"
 name = "Dynamic Color Palette"
 tagline = "Generate palette textures and assign colors via UV lookup"
 maintainer = "Frank Winter <https://www.frankwinter.com>"
