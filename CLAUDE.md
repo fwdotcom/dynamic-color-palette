@@ -1,6 +1,6 @@
 # Dynamic Color Palette — Claude Context
 
-**v2.0 · Frank Winter · GPLv3 · © 2026**
+**v2.1 · Frank Winter · GPLv3 · © 2026**
 
 ---
 
@@ -17,8 +17,7 @@ minimale Drawcalls in der Game Engine.
 
 ## Aktueller Entwicklungsstand
 
-- **v1.2** im Repo (main): Einzelnes `.py`-Script, Alt+P, Konstanten-Konfiguration
-- **v2.0** im Repo (dev): Vollständige Addon-Struktur implementiert, `dynamic_color_palette.zip` paketiert
+- **v2.1** im Repo (main + dev): Vollständige Addon-Struktur implementiert, `dynamic_color_palette.zip` paketiert; Godot-Shader und GDScript-Util werden direkt aus dem Addon exportiert
 
 ---
 
@@ -43,6 +42,10 @@ dynamic_color_palette/
         textures.py      ← GPU-Rendering, Texture-Erzeugung
         materials.py     ← Multicol- und Singlecol-Material-Builder
         image_editor.py  ← Picker-Helpers, region_to_view etc.
+    templates/
+        dcp_multicol.gdshader  ← Vorlage für den UV-getriebenen Godot 4 Spatial Shader
+        dcp_singlecol.gdshader ← Vorlage für den Uniform-getriebenen Godot 4 Spatial Shader
+        dcp_util.gd            ← Vorlage für die GDScript-Utility-Klasse (DCPUtil)
 ```
 
 ---
@@ -53,7 +56,7 @@ dynamic_color_palette/
 bl_info = {
     "name":        "Dynamic Color Palette",
     "author":      "Frank Winter",
-    "version":     (2, 0, 0),
+    "version":     (2, 1, 0),
     "blender":     (4, 2, 0),
     "location":    "View3D → N-Panel → DCP",
     "description": "Generate palette textures and assign colors via UV lookup",
@@ -104,7 +107,11 @@ class DCPProperties(PropertyGroup):
     emission_factor    : FloatProperty(default=4.0, min=0.01)
     emission_strengths : CollectionProperty(type=DCPEmissionEntry)  # max 5
 
-    file_save_path     : StringProperty(subtype='DIR_PATH')
+    # Export-Verzeichnisse (vier unabhängige Pfade, leer = überspringen)
+    textures_export_dir    : StringProperty(subtype='DIR_PATH')  # dcp_albedo.png, dcp_material.png
+    json_export_dir        : StringProperty(subtype='DIR_PATH')  # dcp_config.json
+    gdshader_export_dir    : StringProperty(subtype='DIR_PATH')  # dcp_multicol.gdshader, dcp_singlecol.gdshader
+    gdutilclass_export_dir : StringProperty(subtype='DIR_PATH')  # dcp_util.gd
 
     # Info Quadrant (pro .blend)
     info_line_1        : StringProperty(default="YOUR PROJECT NAME")
@@ -212,7 +219,10 @@ Regenerierung: Configure → Werte anpassen → OK → Generate klicken → Sich
 │  Emission Factor ___                          │
 │  Strips: [val] [val] [val]  [+] [-]           │
 │                                               │
-│  Export Path ___________________________      │
+│  Textures    ___________________________      │
+│  JSON Config ___________________________      │
+│  GDShader    ___________________________      │
+│  GDScript    ___________________________      │
 │                                               │
 │  [ ⚙  Generate / Regenerate Palette ]         │
 │  [ ↺  Reset to Defaults      ]                │
@@ -251,7 +261,8 @@ Regenerierung: Configure → Werte anpassen → OK → Generate klicken → Sich
 - **Picker ohne Selektion** → Farbwert ins Panel; mit Selektion → sofortiger Multicol-Assign
 - **UV-Warn-Label** statt Operator-Report (max. 3 Objekte, dann "… and N more") — erscheint nur noch als Fallback, da fehlende UV-Layer automatisch angelegt werden
 - **Name-Konstanten** in `__init__.py`: `PREFIX`, `VERSION` (aus `bl_info["version"]` abgeleitet), `ALBEDO_IMAGE_NAME`, `MATERIAL_IMAGE_NAME`, `PICKER_IMAGE_NAME`, `MULTICOL_MAT_NAME`, `SINGLECOL_MAT_PREFIX` — alle Datenblocknamen zentral, `bl_info` selbst ist im Extension-System nicht importierbar
-- **STRENGTH_FACTOR** nur im Shader, kein Texturwert, löst keine Sicherheitsabfrage aus
+- **emission_factor** nur im Shader-Node-Tree und im exportierten Shader, kein Texturwert, löst keine Sicherheitsabfrage aus
+- **Templates** in `dynamic_color_palette/templates/` — `dcp_multicol.gdshader`, `dcp_singlecol.gdshader`, `dcp_util.gd`; werden beim Export gelesen, Platzhalter ersetzt und in die konfigurierten Export-Verzeichnisse geschrieben; kein separates Godot-Shader-Paket mehr
 - **Kein Image-Editor-Panel** — User erwartet dort keine DCP-Einstellungen
 - **Konfigurations-Dialog statt Sub-Panel** — `DCP_OT_OpenConfig` via `invoke_props_dialog` statt `DCP_PT_Config`; saubere Trennung von Konfiguration und Workflow, kein Sub-Panel-Overhead im N-Panel
 
@@ -264,7 +275,7 @@ Regenerierung: Configure → Werte anpassen → OK → Generate klicken → Sich
 | solid/metal/emission Roughness + Metalness | Singlecol PBR-Werte |
 | emission_strengths (Werte oder Anzahl) | UV-Punkte + Emission-Werte |
 
-Nicht relevant: emission_factor, CELL_SIZE, bg/fg_hex, info_lines, file_save_path.
+Nicht relevant: emission_factor, CELL_SIZE, bg/fg_hex, info_lines, textures_export_dir, json_export_dir, gdshader_export_dir, gdutilclass_export_dir.
 
 ---
 
@@ -278,11 +289,11 @@ Nicht relevant: emission_factor, CELL_SIZE, bg/fg_hex, info_lines, file_save_pat
 
 **Cleanup:** Edit Mode immer enabled; Object Mode nur bei Selektion; respektiert Fake User
 
-**Export:** `dcp_albedo.png`, `dcp_material.png` in `file_save_path` (nur diese beiden; `dcp_picker` wird **nicht** exportiert); Godot 4 Shader als Muster-Datei im Repo
+**Export:** Vier unabhängige Verzeichnisse (`textures_export_dir`, `json_export_dir`, `gdshader_export_dir`, `gdutilclass_export_dir`); jedes kann leer bleiben (wird dann übersprungen). Geschriebene Dateien: `dcp_albedo.png` + `dcp_material.png`, `dcp_config.json`, `dcp_multicol.gdshader` + `dcp_singlecol.gdshader`, `dcp_util.gd`. `dcp_picker` wird **nicht** exportiert. Shader und GDScript werden aus Templates in `templates/` generiert.
 
 ---
 
 ## V3 Ausblick
 
 - Multi-Palette-Support via Collection (mehrere Prefixes, je eigene Konfiguration)
-- User-seitige Shader-Anpassung (Template-Textblock in Blender)
+- User-seitige Shader-Anpassung (Template-Textblock in Blender, überschreibt `templates/`)
