@@ -1,6 +1,6 @@
 # Dynamic Color Palette — Blender Addon
 
-![Version](https://img.shields.io/badge/version-2.0.7-blue)
+![Version](https://img.shields.io/badge/version-2.1.0-blue)
 ![License](https://img.shields.io/badge/license-GPL--3.0-blue)
 ![Blender](https://img.shields.io/badge/Blender-4.2%2B-orange)
 
@@ -64,7 +64,16 @@ Use this when a face needs its own material — for example so it can be control
 
 ### 3. Export
 
-If you set an **Export Path** in the Configure dialog, DCP writes `dcp_albedo.png` and `dcp_material.png` to that directory automatically on every Generate run. `dcp_picker` is an internal Blender UI image and is not exported. To save the textures manually, use **Image → Save As** in the Image Editor.
+The Configure dialog provides four independent **Export Paths** — set each to a directory or leave it empty to skip that output:
+
+| Path | Written file(s) |
+|---|---|
+| Textures | `dcp_albedo.png`, `dcp_material.png` |
+| JSON Config | `dcp_config.json` |
+| GDShader | `dcp_multicol.gdshader`, `dcp_singlecol.gdshader` |
+| GDScript Util | `dcp_util.gd` |
+
+Files are written automatically on every Generate run. `dcp_picker` is an internal Blender UI image and is never exported. To save textures manually, use **Image → Save As** in the Image Editor.
 
 ### 4. Cleanup
 
@@ -84,7 +93,7 @@ Opened via the **Configure…** button. Changes apply immediately to the scene. 
 | Solid / Metal / Emission Roughness + Metalness | PBR values baked into `dcp_material` per quadrant |
 | Emission Factor | Global emission multiplier applied in the Blender shader node tree |
 | Strips | Emission strength levels (1–5 strips); each strip occupies a vertical band in the emission quadrant |
-| Export Path | Directory for auto-saving `dcp_albedo.png` and `dcp_material.png` on every Generate run |
+| Export Paths | Four independent directories (Textures, JSON Config, GDShader, GDScript Util); each can be set or left empty to skip that output |
 
 **Regeneration safety:** if you change columns, rows, saturation, shadow, any PBR value, or the emission strip list, and a palette already exists, DCP asks for confirmation before regenerating — because those changes shift UV coordinates or alter baked PBR values on existing meshes.
 

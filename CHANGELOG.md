@@ -3,7 +3,7 @@
 All notable changes to Dynamic Color Palette are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [Unreleased]
+## [2.1.0] – 2026-04-08
 
 ### Fixed
 - Pick From Image Editor is now reset to OFF when a blend file is opened —

@@ -22,13 +22,17 @@ DCP creates a standalone Principled BSDF with color and PBR values baked in. No 
 - Interactive picker in the Image Editor; works in Edit Mode and Object Mode
 - One-click Assign for both Multicolor and Singlecolor workflows
 - Material cleanup removes unused slots and orphaned materials
-- Auto-export of `dcp_albedo.png` and `dcp_material.png` on Generate
+- Auto-export to four independent directories: Textures, JSON Config, GDShader (`dcp_multicol.gdshader`, `dcp_singlecol.gdshader`), GDScript Util (`dcp_util.gd`)
 - Regeneration safety: warns before changes that shift UV coordinates
 - All settings stored per .blend file — each project has its own palette
 
 ---
 
-## Godot 4 Shader
+## Godot 4 Shaders
 
-A matching spatial shader is available as a separate download (MIT) at:
-https://fwdotcom.itch.io/dynamic-color-palette
+As of v2.1, two Godot 4 spatial shaders are exported directly from the DCP Configure dialog — no separate download needed:
+
+- **`dcp_multicol.gdshader`** — reads both palette textures at the mesh UV coordinate and resolves color, roughness, metalness, and emission at runtime. Use this on meshes where all faces share the UV-driven `dcp_multicol` material.
+- **`dcp_singlecol.gdshader`** — computes the palette UV at runtime from integer uniforms (`quadrant`, `cell_x`, `cell_y`, `emission_strip`); layout constants are baked in at export time. Use this when you need to change a mesh's palette color from code without modifying its UVs.
+
+A GDScript utility class (`dcp_util.gd`, `class_name DCPUtil`) with typed layout constants is also exported alongside the shaders.

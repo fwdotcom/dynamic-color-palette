@@ -2,7 +2,7 @@
 
 # Dynamic Color Palette
 
-![Version](https://img.shields.io/badge/version-2.0.7-blue)
+![Version](https://img.shields.io/badge/version-2.1.0-blue)
 ![License](https://img.shields.io/badge/license-GPL--3.0-blue)
 ![Blender](https://img.shields.io/badge/Blender-4.2%2B-orange)
 ![Godot](https://img.shields.io/badge/Godot-4.x-orange)
@@ -45,9 +45,24 @@ Both workflows coexist in the same project.
 - **Singlecolor assign** — creates or reuses a baked material for the selected cell and assigns it to selected faces or objects
 - **Material cleanup** — removes unused material slots and orphaned DCP materials in one click; respects Fake User
 - **Info quadrant** — bottom-right corner of the texture renders your project name, studio, and license as a watermark, configurable per .blend file
-- **Auto-export** — optionally writes `dcp_albedo.png` and `dcp_material.png` to a target directory on every regeneration
+- **Auto-export** — four independent export paths (Textures, JSON Config, GDShader, GDScript Util); each can be set or left empty; files are written on every Generate run
 - **Regeneration safety** — if changes would shift UV coordinates or alter PBR values, DCP asks for confirmation before overwriting the existing palette
 - **Per-.blend settings** — all palette configuration is stored on the Blender Scene, not in global preferences; each project has its own settings
+
+---
+
+## What's New in v2.1
+
+The Godot 4 shader and GDScript utility class are now exported **directly from the DCP Configure dialog** — no more separate shader package. Four independent export paths replace the single export directory:
+
+| Path | Written file(s) |
+|---|---|
+| Textures | `dcp_albedo.png`, `dcp_material.png` |
+| JSON Config | `dcp_config.json` (layout constants, strip values, info lines) |
+| GDShader | `dcp_multicol.gdshader` (UV-driven, reads palette at mesh UV), `dcp_singlecol.gdshader` (computes palette UV from int uniforms at runtime — no UV editing needed for color changes) |
+| GDScript Util | `dcp_util.gd` (`class_name DCPUtil`, typed constants) |
+
+All files are written on every Generate run. Point the paths at your Godot project directory and the pipeline is fully automated.
 
 ---
 
@@ -63,20 +78,20 @@ Configuration has moved entirely into the N-Panel: a **Configure dialog** replac
 
 ```
 dynamic_color_palette/    ← Blender addon (GPLv3)
-godot_4_shader/           ← Godot 4 spatial shader (MIT)
+godot_4_shader/           ← LICENSE only (shader is now exported from the addon)
 images/                   ← Screenshots and example textures
 CHANGELOG.md
 ```
 
 - [Addon — Installation & Usage](dynamic_color_palette/README.md)
-- [Godot Shader — Setup & Reference](godot_4_shader/README.md)
+- [Godot Shader — Migration notes](godot_4_shader/README.md)
 
 ---
 
 ## License
 
 - Blender addon — **GPLv3** — [`dynamic_color_palette/LICENSE`](dynamic_color_palette/LICENSE)
-- Godot shader — **MIT** — [`godot_4_shader/LICENSE`](godot_4_shader/LICENSE)
+- Exported Godot shader / GDScript files — **MIT** — [`godot_4_shader/LICENSE`](godot_4_shader/LICENSE)
 
 ---
 

@@ -3,20 +3,20 @@
 
 <h2>What's in the Download</h2>
 
-<p>There are two separate downloads:</p>
+<p>There is one download:</p>
 
 <ul>
   <li>
     <strong>dynamic_color_palette.zip</strong> — Blender addon (GPL v3)<br>
     Requires Blender 4.2 or later.
   </li>
-  <li>
-    <strong>dynamic_color_palette_godot_shader.zip</strong> — Godot 4 spatial shader (MIT)<br>
-    Requires Godot 4.x. Free to use in commercial and open-source projects.
-  </li>
 </ul>
 
-<p>You only need the Godot shader if you are using the Multicolor workflow in Godot 4.</p>
+<p>
+  The Godot 4 shader files (<code>dcp_multicol.gdshader</code>, <code>dcp_singlecol.gdshader</code>)
+  and the GDScript utility class (<code>dcp_util.gd</code>) are exported directly from the DCP
+  Configure dialog into your Godot project directory — no separate shader package needed.
+</p>
 
 <hr>
 
@@ -29,14 +29,14 @@
   <li>The <strong>DCP</strong> tab appears in the <strong>3D Viewport N-Panel</strong> (press <kbd>N</kbd> to open it), visible in both Object Mode and Edit Mode.</li>
 </ol>
 
-<h2>Installation — Godot 4 Shader</h2>
+<h2>Setup — Godot 4 (Multicolor workflow)</h2>
 
 <ol>
-  <li>Download <strong>dynamic_color_palette_godot_shader.zip</strong> and extract it.</li>
-  <li>Copy <code>dynamic_color_palette.gdshader</code> into your Godot project (e.g. <code>res://shaders/</code>).</li>
+  <li>In the DCP Configure dialog, set the <strong>GDShader</strong> export path to a directory inside your Godot project (e.g. <code>res://dcp/</code>).</li>
+  <li>Click <strong>Generate / Regenerate Palette</strong>. DCP writes <code>dcp_multicol.gdshader</code> (and <code>dcp_singlecol.gdshader</code>) to that directory.</li>
   <li>Select your mesh node in the Godot scene.</li>
   <li>In the Inspector, assign a new <strong>ShaderMaterial</strong> to the mesh's material slot.</li>
-  <li>Set the ShaderMaterial's <strong>Shader</strong> property to <code>dynamic_color_palette.gdshader</code>.</li>
+  <li>Set the ShaderMaterial's <strong>Shader</strong> property to <code>dcp_multicol.gdshader</code>.</li>
   <li>
     Assign the two textures exported from Blender to the shader parameters:
     <ul>
@@ -63,5 +63,5 @@
   <li>Open an Image Editor next to the 3D Viewport. Click <strong>Pick From Image Editor</strong> in the DCP panel.</li>
   <li>Click a color cell to preview it, or select faces first and click to assign immediately.</li>
   <li>Use <strong>Assign Multicolor Material</strong> (UV-driven) or <strong>Assign Singlecolor Material</strong> (baked) as needed.</li>
-  <li>Set an Export Path in Configure… — DCP writes <code>dcp_albedo.png</code> and <code>dcp_material.png</code> on every Generate run.</li>
+  <li>Set the export paths in Configure… — DCP writes textures, JSON config, shaders, and the GDScript util to the configured directories on every Generate run.</li>
 </ol>

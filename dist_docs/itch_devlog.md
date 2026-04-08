@@ -1,4 +1,44 @@
-<!-- itch.io — Devlog entry -->
+<!-- itch.io — Devlog entry: DCP 2.1 -->
+
+# DCP 2.1: Shaders and Config Exported Directly from Blender
+
+The Godot side of the pipeline is now fully automated — shader files, layout config, and a GDScript utility class are written straight into your Godot project on every palette generate.
+
+---
+
+## What changed
+
+**Four independent export paths**
+The single export directory is replaced by four separate fields in the Configure dialog — Textures, JSON Config, GDShader, and GDScript Util. Each can be set or left empty independently. Point them at your Godot project directory and the files land there automatically on every Generate run.
+
+**Two Godot shaders**
+`dcp_multicol.gdshader` is the UV-driven shader for meshes where all faces share the DCP palette material — same as before, now exported automatically and renamed to match DCP conventions.
+
+`dcp_singlecol.gdshader` is new: it computes the palette UV at runtime from integer uniforms (`quadrant`, `cell_x`, `cell_y`, `emission_strip`), with layout constants baked in at export time. Use this when you need to change a mesh's color from code without touching its UVs.
+
+**GDScript utility class**
+`dcp_util.gd` (`class_name DCPUtil`, extends `RefCounted`) exports the same layout constants as typed GDScript values — columns, rows, cell size, emission factor, strip values, image names, info lines. No more manual copy-paste from a JSON file.
+
+**JSON config**
+`dcp_config.json` is still written alongside the shaders for tooling that prefers JSON over GDScript.
+
+---
+
+## No separate shader download
+
+The `dynamic_color_palette_godot_shader.zip` package is retired. Everything the Godot side needs is now generated directly from the addon. The `godot_4_shader/` directory in the repository now only contains the MIT license for reference.
+
+---
+
+## What's next
+
+Multi-palette support (v3) remains on the horizon — multiple palette configurations per project, each with its own prefix and independent settings.
+
+*— Frank*
+
+---
+
+<!-- itch.io — Devlog entry: DCP 2.0 -->
 
 # DCP 2.0: Full Blender Add-on
 

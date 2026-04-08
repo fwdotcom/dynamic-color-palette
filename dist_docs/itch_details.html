@@ -62,6 +62,12 @@
 
   <dt>🧹 Material cleanup</dt>
   <dd>Removes unused material slots and orphaned DCP materials in one click; respects Fake User</dd>
+
+  <dt>📦 Auto-export</dt>
+  <dd>Four independent export paths (Textures, JSON Config, GDShader, GDScript Util); each can be set or left empty; all files are written on every Generate run</dd>
+
+  <dt>🎮 Godot 4 shaders included</dt>
+  <dd><code>dcp_multicol.gdshader</code> resolves color and PBR from the palette UV at runtime; <code>dcp_singlecol.gdshader</code> computes the palette UV from integer uniforms so color can be changed from code without modifying mesh UVs; exported directly from the Configure dialog — no separate download needed</dd>
 </dl>
 
 <hr>
@@ -70,5 +76,5 @@
 
 <ul>
   <li>Blender addon — <strong>GPL v3</strong></li>
-  <li>Godot shader — <strong>MIT</strong> (free for commercial use)</li>
+  <li>Exported Godot shader / GDScript files — <strong>MIT</strong> (free for commercial use)</li>
 </ul>

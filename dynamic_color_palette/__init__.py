@@ -43,7 +43,7 @@ import bpy
 bl_info = {
     "name":        "Dynamic Color Palette",
     "author":      "Frank Winter",
-    "version":     (2, 0, 8),
+    "version":     (2, 1, 0),
     "blender":     (4, 2, 0),
     "location":    "View3D → N-Panel → DCP",
     "description": "Generate palette textures and assign colors via UV lookup",
@@ -192,7 +192,7 @@ def register() -> None:
     if _on_load_post not in bpy.app.handlers.load_post:
         bpy.app.handlers.load_post.append(_on_load_post)
 
-    print("[DCP v2.0] Registered – open sidebar (N) → DCP tab.")
+    print("[DCP v2.1] Registered – open sidebar (N) → DCP tab.")
 
 
 
