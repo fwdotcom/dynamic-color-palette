@@ -3,7 +3,5 @@ __pycache__/
 dist/
 dist_docs/
 *.blend?
-build_dist.sh
-build_dist.ps1
 CLAUDE.md
 
