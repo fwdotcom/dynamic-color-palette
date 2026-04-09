@@ -67,7 +67,7 @@
   <dd>Four independent export paths (Textures, JSON Config, GDShader, GDScript Util); each can be set or left empty; all files are written on every Generate run</dd>
 
   <dt>🎮 Godot 4 shaders included</dt>
-  <dd><code>dcp_multicol.gdshader</code> resolves color and PBR from the palette UV at runtime; <code>dcp_singlecol.gdshader</code> computes the palette UV from integer uniforms so color can be changed from code without modifying mesh UVs; exported directly from the Configure dialog — no separate download needed</dd>
+  <dd><code>dcp_multicol.gdshader</code> resolves color and PBR from the palette UV at runtime; <code>dcp_singlecol.gdshader</code> computes the palette UV from integer uniforms — supports two palette cells (<code>cell_a_x/y</code>, <code>cell_b_x/y</code>) with a <code>mix_a_b</code> uniform for smooth runtime color blending; exported directly from the Configure dialog — no separate download needed</dd>
 </dl>
 
 <hr>

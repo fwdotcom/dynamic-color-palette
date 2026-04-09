@@ -1,4 +1,14 @@
-<!-- itch.io — Devlog entry: DCP 2.1 -->
+# DCP 2.1.1: Singlecol Shader — Two-Color Blending
+
+`dcp_singlecol.gdshader` now supports smooth runtime blending between two palette cells.
+
+The cell selection is split into two pairs — `cell_a_x`/`cell_a_y` and `cell_b_x`/`cell_b_y` — with a `mix_a_b` float uniform (0.0 = Color A, 1.0 = Color B). Drive it from an `AnimationPlayer`, a tween, or script logic to crossfade between any two palette colors on a mesh without touching its UVs.
+
+`quadrant` and `emission_strip` remain shared: PBR values (roughness, metalness, emission) are defined by the quadrant, not the individual cell, and are consistent across both colors.
+
+Regenerate the shader export from the DCP Configure dialog to get the updated template.
+
+---
 
 # DCP 2.1: Shaders and Config Exported Directly from Blender
 
@@ -29,16 +39,6 @@ The single export directory is replaced by four separate fields in the Configure
 The `dynamic_color_palette_godot_shader.zip` package is retired. Everything the Godot side needs is now generated directly from the addon. The `godot_4_shader/` directory in the repository now only contains the MIT license for reference.
 
 ---
-
-## What's next
-
-Multi-palette support (v3) remains on the horizon — multiple palette configurations per project, each with its own prefix and independent settings.
-
-*— Frank*
-
----
-
-<!-- itch.io — Devlog entry: DCP 2.0 -->
 
 # DCP 2.0: Full Blender Add-on
 
@@ -72,13 +72,3 @@ If you change columns, rows, saturation, or PBR values after assigning faces, DC
 ## Godot shader
 
 The Godot 4 spatial shader ships as a separate download (MIT license — use it freely in commercial projects). It reads both textures at the mesh UV and resolves color, roughness, metalness, and emission. An `emission_scale` uniform lets you animate or script emission intensity at runtime without touching the texture.
-
----
-
-## What's next
-
-The main thing on the horizon for v3 is multi-palette support — multiple palette configurations per project, each with its own prefix and independent settings. Useful for projects with distinct material families (e.g. environment vs. characters) that shouldn't share a palette.
-
-If you run into anything unexpected or have workflow feedback, drop it in the comments.
-
-*— Frank*

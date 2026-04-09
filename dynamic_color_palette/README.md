@@ -1,6 +1,6 @@
 # Dynamic Color Palette — Blender Addon
 
-![Version](https://img.shields.io/badge/version-2.1.0-blue)
+![Version](https://img.shields.io/badge/version-2.1.1-blue)
 ![License](https://img.shields.io/badge/license-GPL--3.0-blue)
 ![Blender](https://img.shields.io/badge/Blender-4.2%2B-orange)
 
