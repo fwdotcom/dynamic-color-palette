@@ -47,8 +47,12 @@ uniform sampler2D material_tex : hint_default_black, filter_nearest, repeat_disa
 // ── Palette cell selection ────────────────────────────────────────────────────
 // quadrant: 0 = Solid, 1 = Metal, 2 = Emission
 uniform int quadrant       : hint_range(0, 2)             = 0;
-uniform int cell_x         : hint_range(0, _COLS - 1)     = 0;
-uniform int cell_y         : hint_range(0, _ROWS - 1)     = 0;
+uniform int cell_a_x       : hint_range(0, _COLS - 1)     = 0;
+uniform int cell_a_y       : hint_range(0, _ROWS - 1)     = 0;
+uniform int cell_b_x       : hint_range(0, _COLS - 1)     = 0;
+uniform int cell_b_y       : hint_range(0, _ROWS - 1)     = 0;
+// 0.0 = full Color A, 1.0 = full Color B
+uniform float mix_a_b      : hint_range(0.0, 1.0, 0.001)  = 0.0;
 uniform int emission_strip : hint_range(0, _N_STRIPS - 1) = 0;
 
 // ── Emission scale ────────────────────────────────────────────────────────────
@@ -96,13 +100,21 @@ vec2 _cell_to_uv(int q, int x, int y, int strip) {
 
 
 void fragment() {
-    vec2 uv = _cell_to_uv(quadrant, cell_x, cell_y, emission_strip);
+    vec2 uv_a = _cell_to_uv(quadrant, cell_a_x, cell_a_y, emission_strip);
+    vec2 uv_b = _cell_to_uv(quadrant, cell_b_x, cell_b_y, emission_strip);
 
-    vec4 albedo_sample   = texture(albedo_tex,   uv);
-    vec4 material_sample = texture(material_tex, uv);
+    // Albedo: mix between cell A and cell B
+    vec3 albedo_color = mix(
+        texture(albedo_tex, uv_a).rgb,
+        texture(albedo_tex, uv_b).rgb,
+        mix_a_b
+    );
+
+    // Material (PBR): sampled from cell A — quadrant and emission_strip define these values
+    vec4 material_sample = texture(material_tex, uv_a);
 
     // ── Base color ────────────────────────────────────────────────────────────
-    ALBEDO    = albedo_sample.rgb;
+    ALBEDO    = albedo_color;
 
     // ── PBR channels from material texture ───────────────────────────────────
     ROUGHNESS = material_sample.r;   // R channel
@@ -110,5 +122,5 @@ void fragment() {
 
     // ── Emission ──────────────────────────────────────────────────────────────
     float emission_strength = material_sample.b * emission_factor;
-    EMISSION = albedo_sample.rgb * emission_strength;
+    EMISSION = albedo_color * emission_strength;
 }

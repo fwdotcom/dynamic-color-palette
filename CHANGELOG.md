@@ -3,6 +3,14 @@
 All notable changes to Dynamic Color Palette are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [2.1.1] – 2026-04-09
+
+### Changed
+- `dcp_singlecol.gdshader`: cell selection split into two pairs (`cell_a_x`/`cell_a_y`
+  and `cell_b_x`/`cell_b_y`) with a `mix_a_b` uniform (0.0 = Color A, 1.0 = Color B);
+  allows smooth runtime color blending between two palette cells without UV changes;
+  `quadrant` and `emission_strip` remain shared and define PBR values for both colors
+
 ## [2.1.0] – 2026-04-08
 
 ### Fixed

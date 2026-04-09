@@ -43,7 +43,7 @@ import bpy
 bl_info = {
     "name":        "Dynamic Color Palette",
     "author":      "Frank Winter",
-    "version":     (2, 1, 0),
+    "version":     (2, 1, 1),
     "blender":     (4, 2, 0),
     "location":    "View3D → N-Panel → DCP",
     "description": "Generate palette textures and assign colors via UV lookup",
